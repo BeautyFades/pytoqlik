@@ -1,29 +1,38 @@
 # Pytoqlik()
 Pytoqlik() instatiates a Python and Qlik connection and allows usage of the methods below to manipulate, import/export data and effectively control Qlik applications using Python. 
 
+In Qlik Cloud, you might need to log in your tenant using your browser to refresh cookies in order to get access to some of the functionalities.
+
 ### Usage:
 ```python
-Pytoqlik(host='ws://localhost:4848/app')
+Pytoqlik(host='ws://localhost:4848/app', api_key='', tenant='', appId='', verbose=True)
 ```
 
 ### Argument breakdown:
-- **host**: string. Set the host address of your Qlik Server. Default: 'ws://localhost:4848/app'.
+- **host**: string. Set the host address of your Qlik Server. This is used to connect to the Qlik Desktop API. If you want to use the Qlik Cloud API, leave this field unchanged. Default: 'ws://localhost:4848/app'.
+- **api_key**: string. This field is related to Qlik Cloud API. You must ask your tenant developers or have the developer role to create an API Key inside your profile. Leave unchanged if you want to connect to Qlik Desktop. Default: ''.
+- **tenant**: string. URL of your Qlik Cloud tenant. For example: "https://my-tenant.us.qlikcloud.com/". Leave unchanged if connecting to Qlik Desktop. Default: ''
+- **appId**: string. Part of the URL of the Qlik Cloud application you want to access. All Qlik Cloud applications have an ID in the form of: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", such as "5078a285-39f8-4bd1-8b1b-351d6cef77ea". You can access this by simply entering the app through your browser and copying the string after "/sense/app/". Leave unchanged if accessing Qlik Desktop. Default: ''
+- **verbose**: boolean. Toggles verbose printing. Default: True.
 
 ### Example:
 ```python
 import pytoqlik
 p2q = pytoqlik.Pytoqlik()
+# (Connects to Qlik Sense Desktop version)
 ```
 
 ------------------------------------------------------------------------------------------
 # toQlik()
-toQlik() is a method called on a Pytoqlik object previously created. (Using Data Load Editor!) It is used to create a new Qlik application using pandas DataFrames as data sources, or to append pandas DataFrames to an existing Qlik application by setting the appName and/or sheetName. Running toQlik() on an existing app will overwrite the scripts being run in it. 
+toQlik() is a method called on a Pytoqlik object previously created. It is used to create a new Qlik application using pandas DataFrames as data sources, or to append pandas DataFrames to an existing Qlik application by setting the appName and/or sheetName (Desktop only). Running toQlik() on an existing app will overwrite the scripts being run in it. 
 
 The data is loaded using Qlik's Data Load Editor, and as such, you might want to synchronize the scripted tables inside Qlik once you load your pandas DataFrame.
 
+For Qlik Cloud version, this method will rewrite the script of the currently selected Qlik application. That is, it will only work on the current application class Pytoqlik(). That means you cannot set the appName nor sheetName. It will also not create a new application by default.
+
 ### Usage:
 ```python
-Pytoqlik().toQlik(*df, appName='PythonApp', sheetName='Dashboard', redirect=False, embedded=True, replace=True, verbose=False, width = 980, height = 800, decimal='.', separator=';')
+Pytoqlik().toQlik(*df, appName='PythonApp', sheetName='Dashboard', redirect=False, embedded=True, replace=True, verbose=False, width = 980, height = 800, decimal='.', separator=';', warning=True)
 ```
 
 ### Argument breakdown:
@@ -37,6 +46,7 @@ Pytoqlik().toQlik(*df, appName='PythonApp', sheetName='Dashboard', redirect=Fals
 - **width / height**: integers. Set embedded display size in pixels. Default: 980px by 800px (w x h).
 - **decimal**: string.  Decimal separator for real numbers in your pandas DataFrame. Default: '.'.
 - **separator**: string.  Value separator in your pandas DataFrame. Default: ';'.
+- **warning**: boolean. Toggle an input warning telling you this method will rewrite all scripts currently in your app. Cloud version only. Default: True.
 
 
 ### Example:
@@ -59,7 +69,7 @@ toPy() converts a Qlik objectID to a pandas DataFrame. You can fetch the Qlik ob
 toPy() returns an empty DataFrame if the object has no dimensions and measures. 
 If there are dimensions but no measures, it returns all dimensions in a single column.
 If there are measures but no dimensions, returns all measures in different columns, but all in a single row (index 0).
-If there are both measures and dimensions, returns a complete DataFrame.
+If there are both measures and dimensions, returns a complete DataFrame as expected.
 
 ### Disclaimer
 Empty dimensions (in blank) must be set to null in QlikSense.
@@ -93,6 +103,8 @@ app.toPy('aaWTm')
 openApp() is a method called on a Pytoqlik object previously created. This method is used to open and display a Qlik Application inside your Jupyter Notebook or redirect you to it in your web browser.
 If there are no Qlik Applications with the name you input, this method will create a new Qlik Application with the specified name and warn you about it.
 
+Qlik Cloud versions use a different kind of connection to applications, and as such, this method does not work for Qlik Cloud. Instead, it returns a message asking for a new Pytoqlik() object pointing to the new app to be created.
+
 ### Usage:
 ```python
 Pytoqlik().openApp(appName='PythonApp', sheetName=None, redirect=False, embedded=True, width=980, height=800, verbose=True)
@@ -117,7 +129,10 @@ p2q.openApp(appName='MyQlikApplication', redirect=True, embedded=False)
 
 ------------------------------------------------------------------------------------------
 # listApps()
-listApps() is a method called on a Pytoqlik object previously created. This method is used to list and display all Qlik Applications currently saved in QlikSense's directory. It returns a pandas DataFrame containing the application name, it's path and file size.
+listApps() is a method called on a Pytoqlik object previously created. This method is used to list and display all Qlik Applications currently saved in your host. When called on a Pytoqlik object in Desktop mode, returns a pandas DataFrame containing the application name, it's path and file size. When called on a Qlik SaaS objectm returns a pandas DataFrame containing the application name, it's ObjectID and file size.
+
+### Known Issues:
+Qlik Cloud version of listApps() return a somewhat random selection of apps, and also, not a complete rundown of your tenant. This might be due to permission issues and a connectivity issue. We remind you that PyToQlik is still under active development as such issues are to be expected.
 
 ### Usage:
 ```python
@@ -125,7 +140,7 @@ Pytoqlik().listApps()
 ```
 
 ### Argument breakdown:
-This method has no arguments.
+- **return_json**: boolean. Whether or not calling this function returns the JSON file the API provides. Default: False.
 
 ### Example:
 ```python
