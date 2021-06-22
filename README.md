@@ -64,7 +64,7 @@ PyToQlik current documentation can be found [HERE](https://github.com/BeautyFade
 
 #### Connectivity
 - Qlik Enterprise support
-- Qlik Cloud support
+- Qlik Cloud robustness
 
 #### Functionality
 - Data fetching based on dimensions and measures
